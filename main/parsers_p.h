@@ -43,6 +43,8 @@
 
 /* Add the name of any new parser definition function here */
 #define PARSER_LIST \
+	AbaqusParser, \
+	AbcParser, \
 	AdaParser, \
 	AntParser, \
 	AsciidocParser, \
@@ -64,6 +66,8 @@
 	CsharpParser, \
 	CtagsParser, \
 	CobolParser, \
+	CobolFreeParser, \
+	CobolVariableParser, \
 	CUDAParser, \
 	DParser, \
 	DiffParser, \
@@ -78,9 +82,12 @@
 	FalconParser, \
 	FlexParser, \
 	FortranParser, \
+	FunctionParametersParser, \
 	FyppParser,	   \
 	GdbinitParser, \
 	GoParser, \
+	HaskellParser, \
+	HaxeParser, \
 	HtmlParser, \
 	IniconfParser, \
 	InkoParser, \
@@ -89,15 +96,19 @@
 	JavaPropertiesParser, \
 	JavaScriptParser, \
 	JsonParser, \
+	JuliaParser, \
 	KconfigParser, \
+	KotlinParser, \
 	LdScriptParser, \
 	LispParser, \
+	LiterateHaskellParser, \
 	LuaParser, \
 	M4Parser, \
 	ManParser, \
 	MakefileParser, \
 	MarkdownParser, \
 	MatLabParser, \
+	MesonParser, \
 	MooseParser, \
 	MyrddinParser, \
 	NsisParser, \
@@ -141,6 +152,7 @@
 	TexParser, \
 	TexBeamerParser, \
 	TTCNParser, \
+	Txt2tagsParser, \
 	TypeScriptParser, \
 	VeraParser, \
 	VerilogParser, \

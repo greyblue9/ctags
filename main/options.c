@@ -663,20 +663,6 @@ extern void verbose (const char *const format, ...)
 	}
 }
 
-extern void notice (const char *const format, ...)
-{
-	if (!Option.quiet)
-	{
-		va_list ap;
-		fprintf (stderr, "%s: Notice: ", getExecutableName ());
-		va_start (ap, format);
-		vfprintf (stderr, format, ap);
-		va_end (ap);
-		fputs ("\n", stderr);
-	}
-}
-
-
 static char *stringCopy (const char *const string)
 {
 	char* result = NULL;
@@ -2008,7 +1994,7 @@ extern bool processParamOption (
 	name = sep + 1;
 
 	if (value == NULL || value [0] == '\0')
-		error (FATAL, "no parameter is given for %s", option);
+		error (FATAL, "no value is given for %s", option);
 
 	applyParameter (language, name, value);
 
