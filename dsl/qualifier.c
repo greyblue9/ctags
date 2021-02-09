@@ -28,6 +28,7 @@ struct sQCode
  * DATA DEFINITIONS
  */
 static DSLProcBind pbinds [] = {
+  0
 };
 
 
