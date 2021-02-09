@@ -132,7 +132,8 @@ bool cxxParserParseAndCondenseCurrentSubchain(
 		CXX_DEBUG_PRINT(
 				"Parsing the subchain failed or EOF found. Discarding broken subtree"
 			);
-
+	 
+   return false;
 		while(g_cxx.pTokenChain->iCount > 1)
 			cxxTokenChainDestroyLast(g_cxx.pTokenChain);
 
@@ -1013,7 +1014,8 @@ static bool cxxParserParseClassStructOrUnionInternal(
 		// }
 
 		if(g_cxx.pTemplateSpecializationTokenChain)
-			cxxTokenChainDestroy(g_cxx.pTemplateSpecializationTokenChain);
+;// 			cxxTokenChainDestroy(g_cxx.pTemplateSpecializationTokenChain);
+
 
 		g_cxx.pTemplateSpecializationTokenChain = cxxParserParseTemplateAngleBracketsToSeparateChain(false);
 		if(!g_cxx.pTemplateSpecializationTokenChain)
