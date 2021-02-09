@@ -1032,7 +1032,53 @@ static bool cxxParserParseNextTokenCondenseCXX11Attribute(void)
 
 		return cxxParserParseNextToken();
 	}
-
+	
+	if (g_cxx.pToken->pChain->iCount != 3) {
+	  fprintf(stderr, "%s:%d: %s: Expected 3 tokens in chain, but found %d instead\n",
+	    __FILE__, __LINE__, __PRETTY_FUNCTION__,
+	    g_cxx.pToken->pChain->iCount);
+	  fprintf(stderr, "  Current token = \"%s\"\n", TOKEN_STR(g_cxx.pToken));
+	  fprintf(stderr, "  Tail          = \"%s\"\n", printTokenTail(g_cxx.pToken));
+	  //fprintf(stderr, "  Chain         = \"%s\"\n", printTokenTail(g_cxx.pToken->pChain));
+    	  
+	  return false;
+	}
+	
+	bool isParenthesisChain
+	  = cxxTokenTypeIs(g_cxx.pToken, CXXTokenTypeSquareParenthesisChain);
+	
+  CXXTokenChain * tc = g_cxx.pToken->pChain;
+  CXXToken *first    = g_cxx.pToken->pChain? g_cxx.pToken->pChain->pHead: 0;
+  CXXToken *last     = g_cxx.pToken->pChain? g_cxx.pToken->pChain->pTail: 0;
+  fprintf(stderr, "  Chain         = %08x\n", tc);
+  
+	if (! isParenthesisChain) {
+	  fprintf(stderr, "%s:%d: %s: Expected isParenthesisChain, but %s returned 0\n",
+	    __FILE__, __LINE__, __PRETTY_FUNCTION__,
+	    "cxxTokenTypeIs(g_cxx.pToken, CXXTokenTypeSquareParenthesisChain)");
+	  fprintf(stderr, "  Current token = \"%s\"\n", TOKEN_STR(g_cxx.pToken));
+	  fprintf(stderr, "  Token+        = \"%s\"\n", printTokenTail(g_cxx.pToken));
+	  if (tc) {
+	    fprintf(stderr, "  Chain Tail    = \"%s\"\n", TOKEN_STR(last));
+	    fprintf(stderr, "  Chain Head    = \"%s\"\n", TOKEN_STR(first));
+	    fprintf(stderr, "  Chain Tail+   = \"%s\"\n", printTokenTail(last));
+	    fprintf(stderr, "  Chain Head+   = \"%s\"\n", printTokenTail(first));
+    }
+    return false;
+	}
+	
+	CXXToken *nestedChain = cxxTokenChainAt(g_cxx.pToken->pChain, 1);
+	if (!nestedChain) {
+	  fprintf(stderr, "nestedChain = %08x\n", nestedChain);
+	  return false;
+	}
+	
+	bool isNestedParenthesisChain =
+	  cxxTokenTypeIs(nestedChain, CXXTokenTypeSquareParenthesisChain);
+	if (!isNestedParenthesisChain) {
+	  fprintf(stderr, "isNestedParenthesisChain = %d\n", isNestedParenthesisChain);
+	  return false;
+	}
 	// Now the current token should be replaced by a square parenthesis chain
 	// that contains another square parenthesis chain.
 	CXX_DEBUG_ASSERT(
@@ -1041,17 +1087,14 @@ static bool cxxParserParseNextTokenCondenseCXX11Attribute(void)
 		);
 	CXX_DEBUG_ASSERT(
 			(g_cxx.pToken->pChain->iCount == 3) &&
-			cxxTokenTypeIs(
-					cxxTokenChainAt(g_cxx.pToken->pChain,1),
-					CXXTokenTypeSquareParenthesisChain
-				),
+			cxxTokenTypeIs(nestedChain, CXXTokenTypeSquareParenthesisChain),
 			"Should have a nested parenthesis chain inside the last token!"
 		);
-
+  
 	cxxParserAnalyzeAttributeChain(
 			cxxTokenChainAt(g_cxx.pToken->pChain,1)->pChain
 		);
-
+  
 	// Now just kill it.
 	cxxTokenChainDestroyLast(g_cxx.pTokenChain);
 
@@ -1061,6 +1104,10 @@ static bool cxxParserParseNextTokenCondenseCXX11Attribute(void)
 	CXX_DEBUG_LEAVE();
 	return bRet;
 }
+
+
+
+
 
 // A macro token was encountered and it expects a parameter list.
 // The routine has to check if there is a following parenthesis
@@ -1160,17 +1207,17 @@ static void cxxParserParseNextTokenApplyReplacement(
 
 	vString * pReplacement = cppBuildMacroReplacement(pInfo,aParameters,iParameterCount);
 
-	if(pParameters)
+	/* if(pParameters)
 	{
 		cxxTokenChainDestroy(pParameters);
 		eFree((char**)aParameters);
-	}
+	} */
 
 	CXX_DEBUG_PRINT("Applying complex replacement '%s'",vStringValue(pReplacement));
 
 	cppUngetString(vStringValue(pReplacement),vStringLength(pReplacement));
 
-	vStringDelete(pReplacement);
+	// vStringDelete(pReplacement);
 
 	CXX_DEBUG_LEAVE();
 }

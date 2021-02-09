@@ -58,23 +58,114 @@ static bool cxxTemplateTokenCheckIsNonTypeAndCompareWord(const CXXToken *t,void 
 
 static bool cxxTokenIsPresentInTemplateParametersAsNonType(CXXToken * t)
 {
-	CXX_DEBUG_ASSERT(
+  if (g_cxx.oTemplateParameters.uCount >= 24) return false;
+  
+  unsigned int start_of_cxx = (unsigned int) &g_cxx;
+  struct _CXXToken *(*toks) [24] = &g_cxx.oTemplateParameters.aIdentifiers;
+  fprintf(stderr, "%s(t:%08x=\"%s\") n=%d %08x\n",
+    __PRETTY_FUNCTION__, (unsigned int) t, TOKEN_STR(t),
+    g_cxx.oTemplateParameters.uCount, start_of_cxx);
+  
+  for (int i=0; i<g_cxx.oTemplateParameters.uCount; i++) {
+    if ((unsigned int) toks <= start_of_cxx) {
+      fprintf(stderr, "Fail 1A: toks: %08x >= %08x\n", toks, start_of_cxx);
+      return false;
+    }
+    if ((unsigned int) (((char*)toks) + (4*i)) <= start_of_cxx) {
+      fprintf(stderr, "Fail 1B: (toks+(4*%d)): %08x >= %08x\n", i,
+      (unsigned int) (((char*)toks) + (4*i)), start_of_cxx);
+      return false;
+    }
+    if ((unsigned int) (((char*) toks[0]) + (4*i)) <= start_of_cxx) {
+      fprintf(stderr, "Fail 1C: (toks[0]+(4*%d)): %08x >= %08x\n", i,
+      (unsigned int) (((char*)toks[0]) + (4*i)), start_of_cxx); 
+      return false;
+    }
+    if ((unsigned int) (((char*) toks[0][0]) + (4*i)) <= start_of_cxx) {
+      fprintf(stderr, "Fail 1D: (toks[0][0]+(4*%d)): %08x >= %08x\n", i,
+      (unsigned int) (((char*)toks[0][0]) + (4*i)), start_of_cxx); 
+      return false;
+    }
+    if ((unsigned int) (((char*) &toks[0][0][0]) + (4*i)) <= start_of_cxx) {
+      fprintf(stderr, "Fail 1E: (&toks[0][0][0]+(4*%d)): %08x >= %08x\n", i,
+      (unsigned int) (((char*) &toks[0][0][0]) + (4*i)), start_of_cxx); 
+      return false;
+    }
+  }
+  
+  unsigned int v;
+  for (unsigned int u=0;u<g_cxx.oTemplateParameters.uCount;u++)	{
+	  if (! (v=(&g_cxx.oTemplateParameters.aIdentifiers[u][0]))) {
+      fprintf(stderr, "Fail 2A: v=%08x\n", v);
+	    return false;
+	  }
+	  if (! (v=(g_cxx.oTemplateParameters.aIdentifiers[u]))) {
+      fprintf(stderr, "Fail 2B: v=%08x\n", v);
+	    return false;
+	  }
+	  if (! (v=((unsigned char) (g_cxx.oTemplateParameters.aIdentifiers[u]))))
+	  {
+      fprintf(stderr, "Fail 2C: v=%08x\n", v);
+	    return false;
+	  }
+	  v = (unsigned int)g_cxx.oTemplateParameters.aIdentifiers[u]->eType;
+	  if (v == 0) {
+      fprintf(stderr, "Fail 2D: v == 0: v=%08x\n", v);
+	    return false;
+	  }
+	  if ((v & 0xFFFF0000) != 0U) {
+      fprintf(stderr, "Fail 2E: (v & 0xFFFF0000) != 0U: v=%08x\n", v);
+	    return false;
+	  }
+	  if (!(g_cxx.oTemplateParameters.aIdentifiers[u]->pszWord)) {
+      fprintf(stderr, "Fail 2F: !pszWord\n");
+	    return false;
+	  }
+	  if ((v=(unsigned int) g_cxx.oTemplateParameters.aIdentifiers[u]->pszWord)
+	        <= start_of_cxx)
+	  {
+      fprintf(stderr, "Fail 2G: pszWord <= start_of_cxx: v=%08x\n", v);
+	    return false;
+	  }
+	  if ((v=(unsigned int) g_cxx.oTemplateParameters.aIdentifiers[u]->pszWord)
+	        >= 0x70000000U)
+	  {
+      fprintf(stderr, "Fail 2H: pszWord >= 0x70000000U: v=%08x\n", v);
+	    return false;
+	  }
+	}
+	
+	for (unsigned int u=0;u<g_cxx.oTemplateParameters.uCount;u++) {
+	  
+	  if (g_cxx.oTemplateParameters.aIdentifiers[u]->eType
+	      != CXXTokenTypeIdentifier)
+	  {
+      fprintf(stderr, "Fail 3A - non-identifier!\n");
+	    return false;
+	  }
+	  if (! cxxTokenTypeIsOneOf(t,CXXTokenTypeIdentifier)) {
+      fprintf(stderr, "Fail 3B - non-identifier!\n");
+	    return false;
+	  }
+
+	  CXX_DEBUG_ASSERT(
 			cxxTokenTypeIsOneOf(t,CXXTokenTypeIdentifier),
 			"Token must be identifier"
 		);
-
-	for(unsigned int u=0;u<g_cxx.oTemplateParameters.uCount;u++)
-	{
 		if(
 			cxxTemplateTokenCheckIsNonTypeAndCompareWord(
 					t,
 					vStringValue(g_cxx.oTemplateParameters.aIdentifiers[u]->pszWord)
 				)
 			)
+    fprintf(stderr,
+    "leaving %s(t: %s): true\n", __PRETTY_FUNCTION__, TOKEN_STR(t));
 			return true;
 	}
 
-	return false;
+  fprintf(stderr,
+    "leaving %s(t: %s): false\n", __PRETTY_FUNCTION__, TOKEN_STR(t));
+  return false;
 }
 
 static bool cxxTemplateTokenCheckIsTypeAndCompareWord(const CXXToken * t,void * szWord)
@@ -92,22 +183,113 @@ static bool cxxTemplateTokenCheckIsTypeAndCompareWord(const CXXToken * t,void * 
 
 static bool cxxTokenIsPresentInTemplateParametersAsType(CXXToken * t)
 {
-	CXX_DEBUG_ASSERT(
+  if (g_cxx.oTemplateParameters.uCount >= 24) return false;
+  
+  unsigned int start_of_cxx = (unsigned int) &g_cxx;
+  struct _CXXToken *(*toks) [24] = &g_cxx.oTemplateParameters.aIdentifiers;
+  fprintf(stderr, "%s(t:%08x=\"%s\") n=%d %08x\n",
+    __PRETTY_FUNCTION__, (unsigned int) t, TOKEN_STR(t),
+    g_cxx.oTemplateParameters.uCount, start_of_cxx);
+  
+  for (int i=0; i<g_cxx.oTemplateParameters.uCount; i++) {
+    if ((unsigned int) toks <= start_of_cxx) {
+      fprintf(stderr, "Fail 1A: toks: %08x >= %08x\n", toks, start_of_cxx);
+      return false;
+    }
+    if ((unsigned int) (((char*)toks) + (4*i)) <= start_of_cxx) {
+      fprintf(stderr, "Fail 1B: (toks+(4*%d)): %08x >= %08x\n", i,
+      (unsigned int) (((char*)toks) + (4*i)), start_of_cxx);
+      return false;
+    }
+    if ((unsigned int) (((char*) toks[0]) + (4*i)) <= start_of_cxx) {
+      fprintf(stderr, "Fail 1C: (toks[0]+(4*%d)): %08x >= %08x\n", i,
+      (unsigned int) (((char*)toks[0]) + (4*i)), start_of_cxx); 
+      return false;
+    }
+    if ((unsigned int) (((char*) toks[0][0]) + (4*i)) <= start_of_cxx) {
+      fprintf(stderr, "Fail 1D: (toks[0][0]+(4*%d)): %08x >= %08x\n", i,
+      (unsigned int) (((char*)toks[0][0]) + (4*i)), start_of_cxx); 
+      return false;
+    }
+    if ((unsigned int) (((char*) &toks[0][0][0]) + (4*i)) <= start_of_cxx) {
+      fprintf(stderr, "Fail 1E: (&toks[0][0][0]+(4*%d)): %08x >= %08x\n", i,
+      (unsigned int) (((char*) &toks[0][0][0]) + (4*i)), start_of_cxx); 
+      return false;
+    }
+  }
+  
+  unsigned int v;
+  for (unsigned int u=0;u<g_cxx.oTemplateParameters.uCount;u++)	{  
+	  if (! (v=(&g_cxx.oTemplateParameters.aIdentifiers[u][0]))) {
+      fprintf(stderr, "Fail 2A: v=%08x\n", v);
+	    return false;
+	  }
+	  if (! (v=(g_cxx.oTemplateParameters.aIdentifiers[u]))) {
+      fprintf(stderr, "Fail 2B: v=%08x\n", v);
+	    return false;
+	  }
+	  if (! (v=((unsigned char) (g_cxx.oTemplateParameters.aIdentifiers[u]))))
+	  {
+      fprintf(stderr, "Fail 2C: v=%08x\n", v);
+	    return false;
+	  }
+	  v = (unsigned int)g_cxx.oTemplateParameters.aIdentifiers[u]->eType;
+	  if (v == 0) {
+      fprintf(stderr, "Fail 2D: v == 0: v=%08x\n", v);
+	    return false;
+	  }
+	  if ((v & 0xFFFF0000) != 0U) {
+      fprintf(stderr, "Fail 2E: (v & 0xFFFF0000) != 0U: v=%08x\n", v);
+	    return false;
+	  }
+	  if (!(g_cxx.oTemplateParameters.aIdentifiers[u]->pszWord)) {
+      fprintf(stderr, "Fail 2F: !pszWord\n");
+	    return false;
+	  }
+	  if ((v=(unsigned int) g_cxx.oTemplateParameters.aIdentifiers[u]->pszWord)
+	        <= start_of_cxx)
+	  {
+      fprintf(stderr, "Fail 2G: pszWord <= start_of_cxx: v=%08x\n", v);
+	    return false;
+	  }
+	  if ((v=(unsigned int) g_cxx.oTemplateParameters.aIdentifiers[u]->pszWord)
+	        >= 0x70000000U)
+	  {
+      fprintf(stderr, "Fail 2H: pszWord >= 0x70000000U: v=%08x\n", v);
+	    return false;
+	  }
+	}
+	
+	for (unsigned int u=0;u<g_cxx.oTemplateParameters.uCount;u++) {
+	  
+	  if (g_cxx.oTemplateParameters.aIdentifiers[u]->eType
+	      != CXXTokenTypeIdentifier)
+	  {
+      fprintf(stderr, "Fail 3A - non-identifier!\n");
+	    return false;
+	  }
+	  if (! cxxTokenTypeIsOneOf(t,CXXTokenTypeIdentifier)) {
+      fprintf(stderr, "Fail 3B - non-identifier!\n");
+	    return false;
+	  }
+
+	  CXX_DEBUG_ASSERT(
 			cxxTokenTypeIsOneOf(t,CXXTokenTypeIdentifier),
 			"Token must be identifier"
 		);
-
-	for(unsigned int u=0;u<g_cxx.oTemplateParameters.uCount;u++)
-	{
 		if(
 			cxxTemplateTokenCheckIsTypeAndCompareWord(
 					t,
 					vStringValue(g_cxx.oTemplateParameters.aIdentifiers[u]->pszWord)
 				)
 			)
+    fprintf(stderr,
+    "leaving %s(t: %s): true\n", __PRETTY_FUNCTION__, TOKEN_STR(t));
 			return true;
 	}
 
+  fprintf(stderr,
+    "leaving %s(t: %s): false\n", __PRETTY_FUNCTION__, TOKEN_STR(t));
 	return false;
 }
 
@@ -416,8 +598,10 @@ cxxParserParseTemplateAngleBracketsInternal(bool bCaptureTypeParameters,int iNes
 					iGreaterThanCount++;
 				}
 
-				CXX_DEBUG_PRINT("Found %d greater-than signs",iGreaterThanCount);
-
+				CXX_DEBUG_PRINT("*Found %d greater-than signs",iGreaterThanCount);
+      // fprintf(stderr, "token = %s\n", TOKEN_STR(g_cxx.pToken));
+      // fprintf(stderr, "tokenTail = %s\n", printTokenTail(g_cxx.pToken));
+      
 				// check greater than operator: very narrow conditions
 				if(
 					(iGreaterThanCount == 1) &&
@@ -430,8 +614,8 @@ cxxParserParseTemplateAngleBracketsInternal(bool bCaptureTypeParameters,int iNes
 							) ||
 						// whatever op nonTypeParameter [C++03 allows this without parens]
 						(
-							cxxTokenTypeIs(g_cxx.pToken,CXXTokenTypeIdentifier) &&
-							cxxTokenIsPresentInTemplateParametersAsNonType(g_cxx.pToken)
+							cxxTokenTypeIs(g_cxx.pToken,CXXTokenTypeIdentifier) //&&
+							// cxxTokenIsPresentInTemplateParametersAsNonType(g_cxx.pToken)
 						)
 						// WARNING: don't be tempted to add a loose condition that has
 						// (!cxxTokenIsPresentInTemplateParametersAsType()) on the right.
