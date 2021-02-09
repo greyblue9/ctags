@@ -58,7 +58,7 @@ struct sTagEntryInfo {
 				       * (may be NULL if not present) *//*  */
 	unsigned int boundaryInfo;    /* info about nested input stream */
 	MIOPos      filePosition;     /* file position of line containing tag */
-	langType langType;         /* language of input file */
+	enum langTypeEnum langType;         /* language of input file */
 	const char *inputFileName;   /* name of input file */
 	const char *name;             /* name of the tag */
 	int kindIndex;	      /* kind descriptor */
@@ -74,7 +74,7 @@ struct sTagEntryInfo {
 		/* Which scopeKindIndex belong to. If the value is LANG_AUTO,
 		   the value for langType field of this structure is used as default value.
 		   LANG_AUTO is set automatically in initTagEntryInfo. */
-		langType    scopeLangType;
+		enum langTypeEnum    scopeLangType;
 		int         scopeKindIndex;
 		const char* scopeName;
 		int         scopeIndex;   /* cork queue entry for upper scope tag.

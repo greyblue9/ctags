@@ -10,7 +10,17 @@
 #ifndef CTAGS_MAIN_TYPES_H
 #define CTAGS_MAIN_TYPES_H
 
-typedef int langType;
+enum langTypeEnum
+  #ifdef __cplusplus
+    : signed int
+  #endif
+{
+  LANG_IGNORE = -2,
+  LANG_AUTO = -1,
+  LANG_FALLBACK = 1
+};
+
+typedef enum langTypeEnum langType;
 
 struct sTagEntryInfo;
 typedef struct sTagEntryInfo tagEntryInfo;
