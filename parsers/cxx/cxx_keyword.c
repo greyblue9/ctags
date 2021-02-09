@@ -46,7 +46,7 @@ typedef struct _CXXKeywordDescriptor
 
 
 // This array is indexed by the CXXKeywordType enum
-static CXXKeywordDescriptor g_aCXXKeywordTable[] = {
+extern CXXKeywordDescriptor g_aCXXKeywordTable[] = {
 	{
 		"__attribute__",
 		CXXLanguageC | CXXLanguageCPP | CXXLanguageCUDA,
