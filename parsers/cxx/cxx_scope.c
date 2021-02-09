@@ -217,8 +217,13 @@ void cxxScopeSetAccess(enum CXXScopeAccess eAccess)
 
 void cxxScopePushTop(CXXToken * t)
 {
+  bool isIdent = t->eType == CXXTokenTypeIdentifier;
+  bool isOperator = t->eType == CXXTokenTypeKeyword
+              && t->eKeyword == CXXKeywordOPERATOR;
+         // operator() etc
+  if (isOperator) return;
 	CXX_DEBUG_ASSERT(
-			t->eType == CXXTokenTypeIdentifier,
+			isIdent || isOperator,
 			"The scope name must be an identifier"
 		);
 	CXX_DEBUG_ASSERT(
