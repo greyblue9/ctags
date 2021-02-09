@@ -260,7 +260,7 @@ static bool createTagsForArgs (cookedArgs *const args)
 	{
 		const char *const arg = cArgItem (args);
 
-#ifdef MANUAL_GLOBBING
+#if 0
 		resize |= createTagsForWildcardArg (arg);
 #else
 		resize |= createTagsForEntry (arg);
