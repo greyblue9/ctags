@@ -1,4 +1,4 @@
-/*
+ /*
 *   Copyright (c) 2016, Szymon Tomasz Stefanek
 *
 *   This source code is released for free distribution under the terms of the
@@ -1376,6 +1376,139 @@ next_token:
 }
 
 
+typedef struct _CXXKeywordDescriptor {
+  const char* szName;
+  unsigned int uLanguages;
+  unsigned int uFlags;
+} CXXKeywordDescriptor;
+    
+extern CXXKeywordDescriptor g_aCXXKeywordTable[];
+extern char* TOKEN_STR(const CXXToken *const tok);
+
+extern char* printTokenTail(const CXXToken *const tok) {
+  if (!tok) return "(null)";
+  CXXToken *cur = tok;
+  char buf[64] = "";
+  
+  char *end = &buf[63];
+  buf[63]='\0';
+  while (cur) {
+    char *ts = TOKEN_STR(cur);
+    size_t tslen = strlen(ts);
+    char* curPrintStart = end - (char*)tslen;
+    memcpy(curPrintStart, ts, tslen);
+    curPrintStart[-1] = ' ';
+    end = &curPrintStart[-1];
+    cur = cur->pPrev;
+  }
+  return strdup(&end[1]);
+}
+
+extern char* TOKEN_STR(const CXXToken *const tok) {
+  if (!tok) return "(null)";
+  char const *text = 0;
+  char buf[255] = "";
+  
+  switch (tok->eType) {
+    case CXXTokenTypeIdentifier:
+      text = (char*) &tok->pszWord->buffer[0];
+      break;
+    case CXXTokenTypeKeyword:
+      text = &g_aCXXKeywordTable[(int) tok->eKeyword].szName[0];
+      break;
+    case CXXTokenTypeNumber:
+      sprintf(&buf[0], "%d", (int) tok->pszWord);
+      text = &buf[0];
+      break;
+    case CXXTokenTypeSingleColon:
+      text = ":";
+      break;
+    case CXXTokenTypeMultipleColons:
+      text = "::";
+      break;
+    case CXXTokenTypeSemicolon:
+      text = ";";
+      break;
+    case CXXTokenTypeComma:
+      text = ",";
+      break;
+    case CXXTokenTypeAssignment:
+      text = "=";
+      break;
+    case CXXTokenTypeOperator:
+      text = "operator ";
+      break;
+    case CXXTokenTypeGreaterThanSign:
+      text = ">";
+      break;
+    case CXXTokenTypeSmallerThanSign:
+      text = "<";
+      break;
+    case CXXTokenTypeEOF:
+      text = "[EOF]";
+      break;
+    case CXXTokenTypeUnknown:
+      text = "[UNKNOWN]";
+      break;
+    case CXXTokenTypeDotOperator:
+      text = ".";
+      break;
+    case CXXTokenTypePointerOperator:
+      text = "->";
+      break;
+    case CXXTokenTypeStringConstant:
+      break;
+    case CXXTokenTypeStar:
+      text = "*";
+      break;
+    case CXXTokenTypeAnd:
+      text = "&";
+      break;
+    case CXXTokenTypeMultipleAnds:
+      text = "&&";
+      break;
+    case CXXTokenTypeCharacterConstant:
+      text = "'...'";
+      break;
+    case CXXTokenTypeMultipleDots:
+      text = "...";
+      break;
+    case CXXTokenTypeOpeningBracket:
+      text = "{";
+      break;
+    case CXXTokenTypeOpeningParenthesis:
+      text = "(";
+      break;
+    case CXXTokenTypeOpeningSquareParenthesis:
+      text = "[";
+      break;
+    case CXXTokenTypeClosingBracket:
+      text = "}";
+      break;
+    case CXXTokenTypeClosingParenthesis:
+      text = ")";
+      break;
+    case CXXTokenTypeClosingSquareParenthesis:
+      text = "]";
+      break;
+    case CXXTokenTypeBracketChain:
+      text = "{...}";
+      break;
+    case CXXTokenTypeParenthesisChain:
+      text = "(...)";
+      break;
+    case CXXTokenTypeSquareParenthesisChain:
+      text = "[...]";
+      break;
+    case CXXTokenTypeAngleBracketChain:
+      text = "<...>";  
+      break;
+    default:
+      text = "???";
+  }  
+  char *textCopy = strdup(text);
+  return textCopy;
+}
 //
 // Emit a function tag.
 //
@@ -1429,7 +1562,7 @@ int cxxParserEmitFunctionTags(
 			{
 				CXXToken * pScopeId = pInfo->pScopeStart;
 
-				pInfo->pScopeStart = cxxTokenChainNextTokenOfType(
+				  pInfo->pScopeStart = cxxTokenChainNextTokenOfType(
 						pInfo->pScopeStart,
 						CXXTokenTypeMultipleColons
 					);
@@ -1437,15 +1570,23 @@ int cxxParserEmitFunctionTags(
 				CXX_DEBUG_ASSERT(pInfo->pScopeStart,"We should have found a next token here");
 
 				pInfo->pScopeStart = pInfo->pScopeStart->pNext;
-
-				cxxTokenChainDestroyRange(
-						pInfo->pIdentifierChain,
-						pScopeId->pNext,
-						pInfo->pScopeStart->pPrev
-					);
-
-				cxxTokenChainTake(pInfo->pIdentifierChain,pScopeId);
-
+      
+//				cxxTokenChainDestroyRange(
+//						pInfo->pIdentifierChain,
+//						pScopeId->pNext,
+//						pInfo->pScopeStart->pPrev
+//					);
+        if (pInfo->pScopeStart->eType == CXXTokenTypeKeyword
+         && pInfo->pScopeStart->eKeyword == CXXKeywordOPERATOR) {
+          // pScopeId = pInfo->pScopeStart;
+        } else if (pInfo->pScopeStart->eType == CXXTokenTypeNumber
+               ||  pScopeId->eType == CXXTokenTypeNumber) {
+          // Not a class
+        } else if (pScopeId->eType != CXXTokenTypeIdentifier) {
+          // Cannot push non-identifier scope
+        } else {
+        cxxTokenChainTake(pInfo->pIdentifierChain,pScopeId);
+        
 
 				CXX_DEBUG_PRINT("Pushing scope %s",vStringValue(pScopeId->pszWord));
 
@@ -1456,13 +1597,14 @@ int cxxParserEmitFunctionTags(
 						CXXScopeAccessUnknown
 					);
 				iScopesPushed++;
+				}
 			}
 		} else {
-			cxxTokenChainDestroyRange(
-					pInfo->pIdentifierChain,
-					pInfo->pScopeStart,
-					pInfo->pIdentifierStart->pPrev
-				);
+//			cxxTokenChainDestroyRange(
+//					pInfo->pIdentifierChain,
+//					pInfo->pScopeStart,
+//					pInfo->pIdentifierStart->pPrev
+//				);
 		}
 	}
 
@@ -1938,13 +2080,6 @@ bool cxxParserTokenChainLooksLikeFunctionParameterList(
 
 #define TOKENS_THAT_SHOULD_NOT_APPEAR_IN_SIGNATURE_BEFORE_ASSIGNMENT \
 		( \
-			CXXTokenTypePointerOperator | \
-			CXXTokenTypeOperator | \
-			CXXTokenTypeDotOperator | \
-			CXXTokenTypeNumber | \
-			CXXTokenTypeStringConstant | \
-			CXXTokenTypeCharacterConstant | \
-			CXXTokenTypeAngleBracketChain | \
 			CXXTokenTypeSingleColon \
 		)
 
