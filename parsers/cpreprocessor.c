@@ -113,6 +113,63 @@ typedef struct sCppState {
 } cppState;
 
 
+
+
+char * g_CppCurrentMacroNameChars = 0;
+char * g_CppCurrentMacroDefChars = 0;
+
+typedef enum eTriState { TS_UNSET, TS_TRUE, TS_FALSE } triState;
+static triState printDefines;
+static char const *format;
+
+void maybePrintDefine(const char *name, const char *value) {
+  switch (printDefines) {
+    case TS_UNSET: {
+      char *printDefinesEnvvar = getenv("PRINT_DEFINES");
+      if (!printDefinesEnvvar || !printDefinesEnvvar[0]) {
+        printDefinesEnvvar ="0";
+      }
+      switch (printDefinesEnvvar[0]) {
+        case '1': 
+        case 'Y': 
+        case 'y':
+        case 'T':
+        case 't':
+          printDefines = TS_TRUE;
+          break;
+        default: 
+          printDefines = TS_FALSE;
+          return;
+      }
+    };
+    default:
+      return;
+    case TS_TRUE:
+      break;
+  };
+  if (!format) {
+    format = getenv("FORMAT") ? getenv("FORMAT") : "#define %s %s\n";
+  }
+  printf(format, name, value);
+}
+void onMacro(const char *name, const char *value) {
+  maybePrintDefine(name, value);
+}
+void doNothing() {
+  return;
+}
+static bool maybeInitHashtable(cppState * cpp) {
+  if (cpp->fileMacroTable) return false;
+  cpp->fileMacroTable = hashTableNew(
+    65536,
+    hashPtrhash,
+    hashCstrcaseeq,
+    doNothing,
+    doNothing
+  );
+  return true;
+}
+
 typedef enum {
 	CPREPRO_MACRO_KIND_UNDEF_ROLE,
 } cPreProMacroRole;
@@ -223,6 +280,7 @@ static cppState Cpp = {
 		}
 	}  /* directive */
 };
+
 
 /*
 *   FUNCTION DECLARATIONS
@@ -949,15 +1007,16 @@ static int directiveDefine (const int c, bool undef)
 		}
 	}
 	Cpp.directive.state = DRCTV_NONE;
-
-	if (r != CORK_NIL && Cpp.fileMacroTable)
+  
+	if (r != CORK_NIL && (maybeInitHashtable(&Cpp) || Cpp.fileMacroTable)) {
 		registerEntry (r);
+	}
 	return r;
 }
 
 static void directiveUndef (const int c)
 {
-	if (isXtagEnabled (XTAG_REFERENCE_TAGS))
+	if (true || isXtagEnabled (XTAG_REFERENCE_TAGS))
 	{
 		directiveDefine (c, true);
 	}
@@ -1688,6 +1747,7 @@ static void findCppTags (void)
 static hashTable * cmdlineMacroTable;
 
 
+
 static bool buildMacroInfoFromTagEntry (int corkIndex,
 										tagEntryInfo * entry,
 										void * data)
@@ -1874,7 +1934,16 @@ static cppMacroInfo * saveMacro(hashTable *table, const char * macro)
 
 	if(!macro)
 		return NULL;
-
+  
+  free(g_CppCurrentMacroNameChars);
+  free(g_CppCurrentMacroDefChars);
+  char *idstr = strdup(macro);
+  idstr[(strstr(idstr, "=") - idstr)] = '\0';
+  g_CppCurrentMacroNameChars = idstr;
+  char *value = strdup(strstr(macro, "=")+1);
+  g_CppCurrentMacroDefChars = value;
+  onMacro(idstr, value);
+  
 	Assert (table);
 
 	const char * c = macro;
@@ -2157,10 +2226,11 @@ static cppMacroInfo * saveMacro(hashTable *table, const char * macro)
 		if(c > begin)
 			ADD_CONSTANT_REPLACEMENT(begin,c - begin);
 	}
-
-	hashTablePutItem(table,eStrndup(identifierBegin,identifierEnd - identifierBegin),info);
+  
+ char * key = eStrndup(identifierBegin,identifierEnd - identifierBegin);
+	hashTablePutItem(table, key, info);
 	CXX_DEBUG_LEAVE();
-
+  
 	return info;
 }
 
